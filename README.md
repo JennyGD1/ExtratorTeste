@@ -1,2 +1,0 @@
-# ExtratorTeste
-Teste para INOVA
