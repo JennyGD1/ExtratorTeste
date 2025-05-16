@@ -1,4 +1,4 @@
 # gunicorn.conf.py
-workers = 2  # Número de processos trabalhadores
-timeout = 60  # Timeout de 60 segundos (padrão é 30)
-keepalive = 5  # Mantém conexões vivas por 5 segundos
+workers = 2
+timeout = 60
+keepalive = 5  # Em segundos
