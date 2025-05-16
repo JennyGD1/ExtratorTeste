@@ -36,8 +36,8 @@ CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/
 http = urllib3.PoolManager(
     timeout=urllib3.Timeout(connect=120.0, read=60.0),
     retries=urllib3.Retry(
-        total=2,
-        backoff_factor=1,
+        total=3,
+        backoff_factor=2, # Aumentando o backoff factor
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["GET"]
     )
