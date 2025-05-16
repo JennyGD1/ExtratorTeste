@@ -11,6 +11,8 @@ from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
 app.secret_key = 'sua-chave-secreta-aqui'
 
+
+
 # Configuração de logging
 if not os.path.exists('logs'):
     os.makedirs('logs')
@@ -31,10 +33,9 @@ CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/
 
 # Configuração do urllib3 com timeout aumentado
 http = urllib3.PoolManager(
-     timeout=urllib3.Timeout(connect=30.0, read=60.0),  # Aumente para 30s/60s
-    retries=urllib3.Retry(2)  # Reduza tentativas para evitar espera longa
+    timeout=urllib3.Timeout(connect=30.0, read=60.0),
+    retries=urllib3.Retry(2)
 )
-
 # Dicionário de códigos de cobrança
 CODIGOS_COBRANCA = {
     '7033': 'Titular',
@@ -88,6 +89,7 @@ def index():
 @app.route('/buscar_contracheques', methods=['POST'])
 def buscar_contracheques():
     try:
+          
         data = request.get_json()
         if not data or 'matricula' not in data:
             return jsonify({"error": "Dados inválidos"}), 400
@@ -104,6 +106,15 @@ def buscar_contracheques():
 
         resultados = []
         
+        # Headers definidos aqui dentro da função
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': RH_BAHIA_BASE_URL,
+            'Accept': 'application/pdf',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()]) if request.cookies else ''
+        }
+        
         for ano in range(ano_inicial, ano_final + 1):
             for mes in range(1, 13):
                 url = CONTRACHEQUE_URL_TEMPLATE.format(
@@ -113,16 +124,7 @@ def buscar_contracheques():
                 )
                 
                 try:
-                    # Requisição com urllib3
-                    response = http.request(
-                        'GET',
-                        url,
-                        headers={
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                            'Referer': RH_BAHIA_BASE_URL,
-                            'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()]) if request.cookies else ''
-                        }
-                    )
+                    response = http.request('GET', url, headers=headers)
                     
                     if response.status == 401:
                         return jsonify({
@@ -134,7 +136,6 @@ def buscar_contracheques():
                         logger.warning(f"Erro ao acessar {url} - Status: {response.status}")
                         continue
                     
-                    # Valida e processa o PDF
                     if validar_pdf(response.data):
                         valores = processar_contracheque_pdf(response.data)
                         if valores:
@@ -145,17 +146,15 @@ def buscar_contracheques():
                             })
                     
                 except (MaxRetryError, TimeoutError) as e:
-                    logger.error(f"Erro de conexão ao acessar {url}: {str(e)}")
+                    logger.error(f"Timeout ao acessar RH Bahia: {str(e)}")
                     continue
-                except Exception as e:
-                    logger.error(f"Erro inesperado ao processar {mes}/{ano}: {str(e)}")
-                    continue
-        
+
+        # Verificação de resultados deve estar AQUI, dentro da função
         if not resultados:
             return jsonify({
-                "error": "Nenhum contracheque encontrado para o período",
-                "login_url": f"{RH_BAHIA_BASE_URL}/login"
-            }), 404
+                "error": "Nenhum contracheque encontrado. Servidor pode estar indisponível.",
+                "status": 503
+            }), 503
         
         # Armazena resultados na sessão
         session['resultados'] = resultados
