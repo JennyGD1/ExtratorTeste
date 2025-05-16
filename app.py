@@ -1,7 +1,8 @@
 import fitz  # PyMuPDF
 import re
 import os
-import requests
+import urllib3
+from urllib3.exceptions import MaxRetryError, TimeoutError
 from flask import Flask, render_template, request, jsonify, session, redirect, flash
 from datetime import datetime
 import logging
@@ -14,14 +15,10 @@ app.secret_key = 'sua-chave-secreta-aqui'
 RH_BAHIA_BASE_URL = "https://rhbahia.ba.gov.br"
 CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/{ano}/{mes:02d}/1/{matricula}"
 
-# Configuração do logger
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        RotatingFileHandler('app.log', maxBytes=100000, backupCount=3),
-        logging.StreamHandler()
-    ]
+# Configuração do urllib3 com timeout aumentado
+http = urllib3.PoolManager(
+    timeout=urllib3.Timeout(connect=10.0, read=30.0),
+    retries=urllib3.Retry(3)  # Tenta 3 vezes antes de desistir
 )
 logger = logging.getLogger(__name__)
 
@@ -94,29 +91,29 @@ def buscar_contracheques():
                 )
                 
                 try:
-                    # Faz a requisição REAL para o RH BAHIA
-                    response = requests.get(
+                    # Requisição com urllib3
+                    response = http.request(
+                        'GET',
                         url,
-                        cookies=request.cookies,  # Passa os cookies da sessão
                         headers={
                             'User-Agent': 'Mozilla/5.0',
-                            'Referer': RH_BAHIA_BASE_URL
-                        },
-                        timeout=10
+                            'Referer': RH_BAHIA_BASE_URL,
+                            'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()])
+                        }
                     )
                     
-                    if response.status_code == 401:
+                    if response.status == 401:
                         return jsonify({
                             "error": "Faça login no RH BAHIA primeiro",
                             "login_url": f"{RH_BAHIA_BASE_URL}/login"
                         }), 401
                     
-                    if response.status_code != 200:
-                        logger.warning(f"Erro ao acessar {url} - Status: {response.status_code}")
+                    if response.status != 200:
+                        logger.warning(f"Erro ao acessar {url} - Status: {response.status}")
                         continue
                     
-                    # Processa o PDF retornado
-                    valores = processar_contracheque_pdf(response.content)
+                    # Processa o PDF
+                    valores = processar_contracheque_pdf(response.data)
                     if valores:
                         resultados.append({
                             'mes': f"{mes:02d}/{ano}",
@@ -124,7 +121,7 @@ def buscar_contracheques():
                             'valores': valores
                         })
                     
-                except Exception as e:
+                except (MaxRetryError, TimeoutError) as e:
                     logger.error(f"Erro ao processar {mes}/{ano}: {str(e)}")
                     continue
         
