@@ -34,7 +34,7 @@ CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/
 
 # Configuração do urllib3 com timeout aumentado
 http = urllib3.PoolManager(
-    timeout=urllib3.Timeout(connect=60.0, read=60.0), # Aumentando o connect timeout para 60 segundos
+    timeout=urllib3.Timeout(connect=90.0, read=60.0), # Aumentando o connect timeout para 90 segundos
     retries=urllib3.Retry(
         total=2, # Total de 2 retentativas (3 tentativas no total)
         backoff_factor=1, # Adiciona delay (ex: 0s, 2s, 4s) entre tentativas
