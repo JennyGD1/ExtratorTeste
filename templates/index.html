@@ -148,5 +148,30 @@
       });
     });
   </script>
+
+  <script>
+    // Esconde o preloader quando a página estiver totalmente carregada
+    window.addEventListener('load', function() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            // Adiciona transição suave antes de remover
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500); // Tempo igual à duração da transição (0.5s)
+        }
+    });
+
+    // Caso a página demore muito para carregar, força após 5 segundos
+    setTimeout(() => {
+        const preloader = document.getElementById('preloader');
+        if (preloader && preloader.style.display !== 'none') {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 500);
+        }
+    }, 5000);
+</script>
 </body>
 </html>
