@@ -192,33 +192,41 @@ def login_rh_bahia():
         logger.error(f"Erro ao logar no RH BAHIA: {str(e)}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-
-@app.route('/buscar_contracheque', methods=['POST'])
-def buscar_contracheque():
-    matricula = request.form.get('matricula')
+@app.route('/buscar_contracheques', methods=['POST'])
+def buscar_contracheques():
+    data = request.get_json()
+    matricula = data['matricula']
+    ano_inicial = int(data['ano_inicial'])
+    ano_final = int(data['ano_final'])
+    
+    resultados = []
     
     try:
-        # Verifica se o usuário está logado no RH BAHIA
-        response = requests.get(
-            'https://rhbahia.ba.gov.br/api/contracheque',  # URL fictícia - substitua pela real
-            cookies=request.cookies,  # Passa os cookies da sessão
-            params={'matricula': matricula},
-            timeout=10
-        )
+        # Simulação - na prática você faria requests para o RH BAHIA
+        for ano in range(ano_inicial, ano_final + 1):
+            for mes in range(1, 13):
+                url = f"https://rhbahia.ba.gov.br/auditor/contracheque/file/pdf/{ano}/{mes:02d}/1/{matricula}"
+                
+                # Aqui você faria a requisição real e extrairia os dados
+                # Exemplo fictício:
+                resultados.append({
+                    'mes': f"{mes:02d}/{ano}",
+                    'url': url,
+                    'salario': "R$ 5.000,00",  # Valor fictício
+                    'descontos': "R$ 500,00"   # Valor fictício
+                })
         
-        if response.status_code == 401:
-            return jsonify({
-                "error": "Faça login no RH BAHIA primeiro",
-                "login_url": "https://rhbahia.ba.gov.br/login"
-            }), 401
-        
-        # Processa os dados do contracheque
-        dados = parse_contracheque(response.json())  # Função que você implementa
-        return jsonify(dados)
-        
+        return jsonify({
+            'success': True,
+            'matricula': matricula,
+            'resultados': resultados
+        })
+    
     except Exception as e:
-        logger.error(f"Erro ao buscar contracheque: {str(e)}")
-        return jsonify({"error": "Erro ao conectar com o RH BAHIA"}), 500
+        return jsonify({
+            'error': str(e),
+            'login_url': 'https://rhbahia.ba.gov.br/login'
+        }), 500
         
 # Rota Index (igual)
 @app.route('/')
