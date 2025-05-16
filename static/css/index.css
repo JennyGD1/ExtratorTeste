@@ -1,142 +1,12 @@
-.page-index {
-  padding: 20px;
-  background-color: var(--fundo-azul);
-  color: var(--branco);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-}
-
-.logo {
-  margin-top: 30px;
-}
-
-.logo img {
-  max-width: 180px;
-}
-
-.borda-animada {
-  position: relative;
-  border-radius: 40px;
-  padding: 4px;
-  margin: 20px;
-  overflow: hidden;
-}
-
-.borda-animada::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: 40px;
-  background: conic-gradient(
-    from var(--gradient-angle),
-    var(--branco) 0deg 120deg,
-    var(--maida-rosa) 120deg 150deg,
-    var(--branco) 150deg 270deg,
-    var(--maida-amarelo) 270deg 300deg,
-    var(--branco) 300deg 360deg
-  );
-  animation: fluxoContinuoBorda 4s linear infinite;
-  z-index: 0;
-}
-
-.content-box {
-  background-color: white;
-  border-radius: 36px;
-  padding: 40px;
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-
-h1, h2 {
-  color: var(--maida-azul); /* Cor padrão para títulos */
-}
-
-/* Estilo H1 para page-index */
-.page-index h1 {
-   margin-bottom: 20px;
-}
-
-/* Estilo H1 para outras páginas */
-.page-resultado h1,
-.page-detalhes h1 {
-  text-align: center;
-  margin-bottom: 30px;
-  border-bottom: 2px solid rgba(0,0,0,0.1);
-  padding-bottom: 10px;
-}
-.page-detalhes h1 {
-  font-size: 2rem;
-}
-
-/* Estilo H2 para outras páginas */
-.page-resultado h2,
-.page-detalhes h2 {
-  margin-top: 30px; /* H2 geral outras páginas */
-  font-size: 1.3em;
-}
-.page-resultado h2 {
-    text-align: center;
-    margin: 20px 0; /* H2 específico resultados */
-}
-
-
-.page-index input[type="file"] {
-  display: none;
-}
-
-.page-index label,
-.page-index button {
-  display: inline-block;
-  padding: 12px 25px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.page-index label {
-  background-color: var(--maida-rosa);
-  color: white;
-  margin-bottom: 10px;
-}
-
-.page-index button {
-  background-color: var(--maida-amarelo);
-  color: var(--maida-azul);
-  margin-top: 15px;
-}
-
-.file-name {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--maida-azul);
-  min-height: 20px;
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid var(--maida-azul);
-  border-radius: 50%;
-  animation: spinBtn 0.8s linear infinite;
-  margin-right: 8px;
-  vertical-align: middle;
-}
+/* Adicione isso ao seu index.css */
 
 .info-box {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(6, 57, 112, 0.2); /* Fundo azul claro */
   border-radius: 10px;
   padding: 15px;
   margin: 20px 0;
   border-left: 4px solid var(--maida-amarelo);
-  color: var(--branco); /* Adicionei cor do texto para contraste */
+  color: var(--maida-azul); /* Texto azul escuro */
 }
 
 .info-box ol {
@@ -144,11 +14,42 @@ h1, h2 {
   margin: 10px 0 0 0;
 }
 
-.info-box a {
-  color: var(--maida-amarelo);
+.link-externo {
+  color: var(--maida-azul);
+  font-weight: bold;
   text-decoration: underline;
 }
 
-.info-box a:hover {
-  opacity: 0.8;
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--maida-azul);
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.range-group .range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-group select {
+  flex: 1;
+}
+
+.range-group span {
+  color: var(--maida-azul);
 }
