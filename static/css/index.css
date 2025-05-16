@@ -11,7 +11,7 @@
 /* --- Estilos da Página Index --- */
 body.page-index {
   background-color: var(--fundo-azul);
-  color: var(--fonte-azul);
+  color: var(--fundo-azul);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
