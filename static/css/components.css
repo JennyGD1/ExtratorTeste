@@ -1,4 +1,30 @@
+/* --- Estruturas de Layout --- */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.container-centralizado {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 30px;
+  border-radius: 12px;
+}
+
 /* --- Botões --- */
+.btn-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -9,11 +35,17 @@
   font-weight: bold;
   transition: all 0.3s ease;
   cursor: pointer;
+  border: none;
 }
 
 .btn-primary {
   background-color: var(--maida-amarelo);
   color: var(--maida-azul);
+}
+
+.btn-secondary {
+  background-color: var(--maida-rosa);
+  color: white;
 }
 
 /* --- Tabelas --- */
@@ -23,4 +55,36 @@ table {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* ... (outros componentes) */
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* --- Efeitos Visuais --- */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+.scrollbar-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100vh;
+  background-color: var(--branco);
+  z-index: 9999;
+}
+
+.scrollbar-thumb {
+  background-color: var(--maida-amarelo);
+  width: 100%;
+  height: 0;
+  transition: height 0.2s ease;
+  border-radius: 10px 0 0 10px;
+}
