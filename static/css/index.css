@@ -2,6 +2,18 @@
   padding: 20px;
   background-color: var(--fundo-azul);
   color: var(--branco);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.logo {
+  margin-top: 30px;
+}
+
+.logo img {
+  max-width: 180px;
 }
 
 .borda-animada {
@@ -10,4 +22,77 @@
   padding: 4px;
   margin: 20px;
   overflow: hidden;
+}
+
+.borda-animada::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 40px;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    var(--branco) 0deg 120deg,
+    var(--maida-rosa) 120deg 150deg,
+    var(--branco) 150deg 270deg,
+    var(--maida-amarelo) 270deg 300deg,
+    var(--branco) 300deg 360deg
+  );
+  animation: fluxoContinuoBorda 4s linear infinite;
+  z-index: 0;
+}
+
+.content-box {
+  background-color: white;
+  border-radius: 36px;
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.page-index input[type="file"] {
+  display: none;
+}
+
+.page-index label,
+.page-index button {
+  display: inline-block;
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.page-index label {
+  background-color: var(--maida-rosa);
+  color: white;
+  margin-bottom: 10px;
+}
+
+.page-index button {
+  background-color: var(--maida-amarelo);
+  color: var(--maida-azul);
+  margin-top: 15px;
+}
+
+.file-name {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--maida-azul);
+  min-height: 20px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--maida-azul);
+  border-radius: 50%;
+  animation: spinBtn 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
 }
