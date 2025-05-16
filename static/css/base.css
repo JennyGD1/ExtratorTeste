@@ -1,0 +1,33 @@
+/* --- Variáveis Globais --- */
+:root {
+  --maida-azul: #063970;
+  --maida-rosa: #f86ba3;
+  --maida-amarelo: #fdd700;
+  --branco: #ffffff;
+  --fundo-azul: #224aa2;
+}
+
+/* --- Reset e Estilos Base --- */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+}
+
+::selection {
+  background: var(--maida-rosa);
+  color: var(--branco);
+}
+
+/* --- Scrollbar Customizado --- */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
