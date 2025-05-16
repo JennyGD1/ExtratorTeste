@@ -1,3 +1,12 @@
+:root {
+  --fundo-azul: #1a237e;
+  --branco: #ffffff;
+  --maida-rosa: #e91e63;
+  --maida-amarelo: #ffeb3b;
+  --maida-azul: #2196f3;
+  --gradient-angle: 0deg;
+}
+
 /* --- Estilos da Página Index --- */
 body.page-index {
   background-color: var(--fundo-azul);
@@ -124,12 +133,60 @@ h1 {
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 15px;
+  position: relative;
+  overflow: hidden;
 }
 
-.process-btn:hover {
+.process-btn:hover:not(.loading) {
   background-color: var(--maida-rosa);
   color: white;
   transform: translateY(-2px);
+}
+
+/* ANIMAÇÃO DE CARREGAMENTO */
+.process-btn.loading {
+  color: transparent;
+}
+
+.process-btn.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: loadingShine 1.5s infinite linear;
+  z-index: 1;
+  border-radius: 10px;
+}
+
+.process-btn.loading::after {
+  content: 'Processando...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--maida-azul);
+  z-index: 2;
+}
+
+/* Borda animada quando concluído */
+.process-btn.complete {
+  box-shadow: 0 0 0 3px var(--maida-azul);
+  background-color: var(--maida-amarelo);
+}
+
+/* Estado de erro */
+.process-btn.error {
+  background-color: var(--maida-rosa);
+  color: white;
 }
 
 footer {
@@ -139,49 +196,32 @@ footer {
   color: var(--branco);
 }
 
+/* Animações */
 @keyframes fluxoContinuoBorda {
   to { --gradient-angle: 360deg; }
 }
-/* Animação de carregamento */
-@keyframes loadingBorder {
+
+@keyframes loadingShine {
   0% {
-    background-position: 0% 50%;
+    background-position: -100% 0;
   }
   100% {
-    background-position: 100% 50%;
+    background-position: 100% 0;
   }
 }
 
-.btn-loading {
-  position: relative;
-  overflow: hidden;
-  border: none !important;
-}
-
-.btn-loading::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, 
-    rgba(0,0,255,0) 0%, 
-    rgba(0,0,255,1) 50%, 
-    rgba(0,0,255,0) 100%);
-  background-size: 200% 100%;
-  animation: loadingBorder 1.5s infinite linear;
-  z-index: 1;
-  border-radius: inherit;
-}
-
-.btn-disabled {
-  opacity: 0.7;
-  cursor: not-allowed !important;
-}
-
-/* Adicione esta classe quando o carregamento estiver completo */
-.btn-loaded {
-  border: 2px solid #0066ff !important;
-  transition: border 0.3s ease;
+/* Responsividade */
+@media (max-width: 768px) {
+  .content-box {
+    padding: 25px;
+  }
+  
+  .range-group .range-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .range-group span {
+    display: none;
+  }
 }
