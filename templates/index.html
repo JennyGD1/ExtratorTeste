@@ -59,7 +59,7 @@
     Desenvolvido por Jennifer Lima
   </footer>
 
- <script>
+<script>
   // Preloader
   window.addEventListener('load', () => {
     const preloader = document.getElementById('preloader');
@@ -81,73 +81,8 @@
   // Configurar ano final como padrão para o atual
   selectAnoFinal.value = new Date().getFullYear();
 
-  // Busca de contracheques - NOVA VERSÃO COM ANIMAÇÃO
+  // Busca de contracheques - Versão otimizada
   document.getElementById('formContracheque').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const btn = document.querySelector('.process-btn');
-    const matricula = document.getElementById('matricula').value;
-    const anoInicial = document.getElementById('ano-inicial').value;
-    const anoFinal = document.getElementById('ano-final').value;
-    
-    if (!matricula || !anoInicial || !anoFinal) {
-      alert('Preencha todos os campos corretamente');
-      return;
-    }
-
-    // Ativar estado de loading
-    btn.classList.add('loading');
-    
-    try {
-      const response = await fetch('/buscar_contracheques', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matricula: matricula,
-          ano_inicial: anoInicial,
-          ano_final: anoFinal
-        })
-      });
-
-      // Remover loading
-      btn.classList.remove('loading');
-      
-      if (response.status === 401) {
-        // Estado de erro
-        btn.classList.add('error');
-        setTimeout(() => {
-          btn.classList.remove('error');
-          window.open('https://rhbahia.ba.gov.br/login', '_blank');
-        }, 1000);
-        alert('Faça login no RH BAHIA primeiro!');
-        return;
-      }
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        // Estado de sucesso
-        btn.classList.add('complete');
-        setTimeout(() => {
-          window.location.href = "/resultados";
-        }, 1000);
-      } else {
-        // Estado de erro
-        btn.classList.add('error');
-        setTimeout(() => btn.classList.remove('error'), 2000);
-        alert(result.message || 'Erro ao buscar contracheques');
-      }
-      
-    } catch (error) {
-      // Estado de erro
-      btn.classList.remove('loading');
-      btn.classList.add('error');
-      setTimeout(() => btn.classList.remove('error'), 2000);
-      console.error('Erro:', error);
-      alert('Erro na conexão com o servidor');
-    }
-  });
-   document.getElementById('formContracheque').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const btn = document.querySelector('.process-btn');
@@ -166,55 +101,60 @@
     btn.style.setProperty('--progress', '0%');
     
     try {
-      // Simula progresso (substitua pelo progresso real da sua requisição)
-      const simulateProgress = () => {
-        return new Promise((resolve) => {
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 10) + 5;
-            if (progress >= 100) {
-              progress = 100;
-              clearInterval(interval);
-              resolve();
-            }
-            btn.setAttribute('data-progress', progress);
-            btn.style.setProperty('--progress', progress + '%');
-          }, 300);
-        });
-      };
+      // Simula progresso (substitua por progresso real se possível)
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.floor(Math.random() * 10) + 5;
+        if (progress >= 100) progress = 100;
+        btn.setAttribute('data-progress', progress);
+        btn.style.setProperty('--progress', progress + '%');
+        if (progress === 100) clearInterval(progressInterval);
+      }, 300);
 
-      // Inicia a requisição e o progresso simultaneamente
-      const [response] = await Promise.all([
-        fetch('/buscar_contracheques', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            matricula: matricula,
-            ano_inicial: anoInicial,
-            ano_final: anoFinal
-          })
-        }),
-        simulateProgress()
-      ]);
+      const response = await fetch('/buscar_contracheques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matricula: matricula,
+          ano_inicial: anoInicial,
+          ano_final: anoFinal
+        })
+      });
 
-      // Completa com sucesso
-      btn.classList.remove('loading');
-      btn.classList.add('complete');
-      setTimeout(() => {
-        if (response.status === 401) {
+      clearInterval(progressInterval); // Para o simulador de progresso
+      btn.setAttribute('data-progress', '100');
+      btn.style.setProperty('--progress', '100%');
+
+      // Processa resposta
+      if (response.status === 401) {
+        btn.classList.remove('loading');
+        btn.classList.add('error');
+        setTimeout(() => {
+          btn.classList.remove('error');
           window.open('https://rhbahia.ba.gov.br/login', '_blank');
-          alert('Faça login no RH BAHIA primeiro!');
-        } else if (response.ok) {
+        }, 1000);
+        alert('Faça login no RH BAHIA primeiro!');
+        return;
+      }
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        btn.classList.remove('loading');
+        btn.classList.add('complete');
+        setTimeout(() => {
           window.location.href = "/resultados";
-        } else {
-          throw new Error('Erro no servidor');
-        }
-      }, 1000);
+        }, 1000);
+      } else {
+        throw new Error(result.message || 'Erro no servidor');
+      }
       
     } catch (error) {
       btn.classList.remove('loading');
+      btn.classList.add('error');
+      setTimeout(() => btn.classList.remove('error'), 2000);
       console.error('Erro:', error);
-      alert('Erro ao buscar contracheques');
+      alert(error.message || 'Erro ao buscar contracheques');
     }
   });
 </script>
