@@ -2,6 +2,7 @@ import fitz  # PyMuPDF
 import re
 import os
 import urllib3
+import requests
 from urllib3.exceptions import MaxRetryError, TimeoutError, NewConnectionError, ConnectTimeoutError as Urllib3ConnectTimeoutError
 from flask import Flask, render_template, request, jsonify, session, redirect, flash, url_for
 from datetime import datetime
