@@ -1,0 +1,17 @@
+{
+  "padroes_contracheque": {
+    "tjba": {
+      "identificadores": ["TJBA", "TRIBUNAL DE JUSTIÇA DA BAHIA"],
+      "campos": {
+        "plano_saude_servidor": "PLANO DE SAUDE DOS SERV.PUBLICOS ESTADUA",
+        "planserv_especial": "PLANSERV ESPECIAL",
+        "planserv_conjuge": "PLANSERV CONJUGE/COMPANHEIRO (A)",
+        "planserv_agregado": "PLANSERV AGREGADO MAIOR",
+        "coparticipacao_planserv": "CO-PARTICIPAÇÃO PLANSERV"
+      }
+    },
+    "rh_bahia": {
+      "identificadores": ["GOVERNO DO ESTADO DA BAHIA", "SAEB", "SECRETARIA DA ADMINISTRAÇÃO"]
+    }
+  }
+}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Detalhes Mensais</title>
+</head>
+<body>
+ {% include '_preloader.html' %}
+  <!-- ✅ Scroll visual preenchido -->
+  <div class="scrollbar-container">
+    <div class="scrollbar-thumb" id="scrollThumb"></div>
+  </div>
+
+  <div class="container">
+    <h1>📅 Detalhes Mensais</h1>
+
+    <!-- Seletor de Ano -->
+    <div class="year-selector">
+      <label for="anoSelecionado">Filtrar por ano:</label>
+      <select id="anoSelecionado">
+        <option value="todos">Todos os anos</option>
+        {% for ano in anos_disponiveis|sort(reverse=True) %}
+          <option value="{{ ano }}">{{ ano }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% for mes in resultados %}
+      <div class="mes-container" data-ano="{{ mes.ano if mes.ano else 'desconhecido' }}">
+        <div class="mes-header">
+          <h2>
+            {% if mes.mes == 'desconhecido' %}
+              {{ mes.arquivo }}
+            {% else %}
+              {{ mes.mes }}
+            {% endif %}
+          </h2>
+        </div>
+        <table>
+          {% if mes.valores.titular > 0 %}
+          <tr><th>Titular (7033)</th><td>R$ {{ "%.2f"|format(mes.valores.titular) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.conjuge > 0 %}
+          <tr><th>Cônjuge (7035)</th><td>R$ {{ "%.2f"|format(mes.valores.conjuge) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.dependente > 0 %}
+          <tr><th>Dependente (7034)</th><td>R$ {{ "%.2f"|format(mes.valores.dependente) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.agregado_jovem > 0 %}
+          <tr><th>Agregado Jovem (7038)</th><td>R$ {{ "%.2f"|format(mes.valores.agregado_jovem) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.agregado_maior > 0 %}
+          <tr><th>Agregado Maior (7039)</th><td>R$ {{ "%.2f"|format(mes.valores.agregado_maior) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.plano_especial > 0 %}
+          <tr><th>Plano Especial (7037)</th><td>R$ {{ "%.2f"|format(mes.valores.plano_especial) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.coparticipacao > 0 %}
+          <tr><th>Co-participação (7040)</th><td>R$ {{ "%.2f"|format(mes.valores.coparticipacao) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.retroativo > 0 %}
+          <tr><th>Retroativo (7049)</th><td>R$ {{ "%.2f"|format(mes.valores.retroativo) }}</td></tr>
+          {% endif %}
+          {% if mes.valores.parcela_risco > 0 %}
+          <tr><th>Parcela de Risco (7088-7091)</th><td>R$ {{ "%.2f"|format(mes.valores.parcela_risco) }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    {% endfor %}
+
+    <div class="btn-container">
+      <a href="{{ url_for('mostrar_resultados') }}" class="btn btn-secondary">
+        📊 Voltar ao Resumo
+      </a>
+      <a href="{{ url_for('index') }}" class="btn btn-primary">
+        🔄 Novo Cálculo
+      </a>
+    </div>
+
+    <p class="info-text">
+      Processado em {{ now.strftime('%d/%m/%Y às %H:%M') }}
+    </p>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const anoSelecionado = document.getElementById('anoSelecionado');
+      
+      anoSelecionado.addEventListener('change', function() {
+        const ano = this.value;
+        const mesContainers = document.querySelectorAll('.mes-container');
+        
+        mesContainers.forEach(container => {
+          if (ano === 'todos' || container.dataset.ano === ano) {
+            container.style.display = 'block';
+          } else {
+            container.style.display = 'none';
+          }
+        });
+      });
+      
+      // Dispara o evento change para aplicar o filtro inicial se necessário
+      anoSelecionado.dispatchEvent(new Event('change'));
+    });
+  </script>
+  
+  <style>
+    .year-selector {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      text-align: center;
+    }
+    
+    .year-selector label {
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    
+    .year-selector select {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    
+    .mes-container {
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+  </style>
+</body>
+</html>

@@ -1,0 +1,507 @@
+/* static/css/style.css */
+
+/* --- Variáveis Globais --- */
+:root {
+  --maida-azul: #063970;
+  --maida-rosa: #f86ba3;
+  --maida-amarelo: #fdd700;
+  --branco: #ffffff;
+  --fundo-azul: #224aa2; /* Usado no preloader e index */
+}
+
+/* --- Estilos do Preloader --- */
+#preloader {
+  position: fixed; /* Cobre toda a tela */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--fundo-azul); /* Fundo azul */
+  display: flex;
+  flex-direction: column; /* Empilha logo e spinner */
+  justify-content: center; /* Centraliza verticalmente */
+  align-items: center; /* Centraliza horizontalmente */
+  z-index: 9999; /* Garante que fique por cima de tudo */
+  opacity: 1;
+  visibility: visible;
+  /* Transição suave para desaparecer */
+  transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+}
+
+#preloader.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.preloader-logo {
+  max-width: 180px; /* Ajuste o tamanho do logo se necessário */
+  margin-bottom: 30px; /* Espaço entre logo e spinner */
+}
+
+.preloader-spinner {
+  width: 60px; /* Tamanho do spinner */
+  height: 60px;
+  overflow: visible;
+}
+
+.preloader-spinner circle {
+  fill: none; /* Sem preenchimento */
+  stroke: var(--maida-amarelo); /* COR SÓLIDA AMARELA */
+  stroke-width: 6; /* Espessura da linha */
+  stroke-linecap: round; /* Pontas arredondadas */
+  transform-origin: center; /* Centro para rotação */
+  animation: girarInfinito 1.5s linear infinite; /* Animação base */
+  /* --- CONTROLE DO ARCO (AJUSTAR VALORES!) --- */
+}
+
+#preloader-circulo-externo {
+  /* Exemplo: Aprox. 3/4 visível (188 de 251, r=40) */
+  stroke-dasharray: 188 63;
+}
+
+#preloader-circulo-interno {
+  /* Exemplo: Aprox. 1/2 visível (94 de 188, r=30) */
+  stroke-dasharray: 94 94;
+  animation-direction: reverse; /* Inverte a direção da animação */
+}
+
+/* --- Base e Reset Mínimo --- */
+html, body {
+  margin: 0;
+  padding: 0; /* Removido padding padrão do body aqui */
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+}
+
+/* Estilos específicos do Body por página (requer adicionar classe no HTML) */
+body.page-index {
+  padding: 20px; /* Padding específico do index */
+  background-color: var(--fundo-azul); /* Fundo azul */
+  color: var(--branco); /* Cor de texto padrão para index */
+  display: flex; /* Layout flex do index */
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+body.page-resultado,
+body.page-detalhes {
+  padding: 20px; /* Padding para outras páginas */
+  background: url("{{ url_for('static', filename='img/wallpaper_maida.png') }}") no-repeat center center fixed;
+  background-size: cover;
+  color: var(--maida-azul); /* Cor de texto padrão para outras páginas */
+  min-height: 100vh; /* Garante altura mínima */
+}
+
+/* --- Estilos Gerais --- */
+::selection {
+  background: var(--maida-rosa);
+  color: var(--branco);
+}
+
+h1, h2 {
+  color: var(--maida-azul); /* Cor padrão para títulos */
+}
+
+/* Estilo H1 para page-index */
+.page-index h1 {
+   margin-bottom: 20px;
+}
+
+/* Estilo H1 para outras páginas */
+.page-resultado h1,
+.page-detalhes h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+  padding-bottom: 10px;
+}
+.page-detalhes h1 {
+  font-size: 2rem;
+}
+
+/* Estilo H2 para outras páginas */
+.page-resultado h2,
+.page-detalhes h2 {
+  margin-top: 30px; /* H2 geral outras páginas */
+  font-size: 1.3em;
+}
+.page-resultado h2 {
+    text-align: center;
+    margin: 20px 0; /* H2 específico resultados */
+}
+
+/* --- Componentes Comuns --- */
+
+/* Logo (Usado no Index) */
+.logo {
+  margin-top: 30px;
+}
+.logo img {
+  max-width: 180px;
+}
+
+/* Scrollbar Customizado */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+html, body {
+  scrollbar-width: none;   /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.page-index, .page-resultado, .page-detalhes {
+  overflow-y: scroll; /* Garantir scroll */
+}
+
+.scrollbar-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100vh;
+  background-color: var(--branco);
+  z-index: 9999;
+}
+.scrollbar-thumb {
+  background-color: var(--maida-amarelo);
+  width: 100%;
+  height: 0;
+  transition: height 0.2s ease;
+  border-radius: 10px 0 0 10px;
+}
+
+/* Ripple Effect */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-animation 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  z-index: 999; /* Abaixo do preloader */
+}
+
+/* Botões (Estilo comum de resultado/detalhes) */
+.btn-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary {
+  background-color: var(--maida-amarelo);
+  color: var(--maida-azul);
+}
+.btn-secondary {
+  background-color: var(--maida-rosa);
+  color: white;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  opacity: 0.95;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Tabela (Estilo comum de resultado/detalhes) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.page-detalhes table {
+  margin-top: 10px;
+  margin-bottom: 30px;
+   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.page-resultado th, .page-resultado td {
+   background-color: rgba(255, 255, 255, 0.6);
+}
+.page-detalhes th, .page-detalhes td {
+   background-color: rgba(255, 255, 255, 0.8);
+}
+
+th {
+  font-weight: 600;
+}
+.page-resultado th {
+   background-color: rgba(255, 255, 255, 0.8);
+}
+
+.total-geral {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--branco);
+  background-color: var(--maida-azul);
+  border-top: 2px solid var(--maida-azul);
+}
+
+/* --- Componentes Específicos da Página Index --- */
+
+.borda-animada {
+  position: relative;
+  border-radius: 40px;
+  padding: 4px;
+  margin: 20px;
+  overflow: hidden;
+}
+.borda-animada::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 40px;
+  background: conic-gradient(
+    from var(--gradient-angle),
+    var(--branco) 0deg 120deg,
+    var(--maida-rosa) 120deg 150deg,
+    var(--branco) 150deg 270deg,
+    var(--maida-amarelo) 270deg 300deg,
+    var(--branco) 300deg 360deg
+  );
+  animation: fluxoContinuoBorda 4s linear infinite;
+  z-index: 0;
+}
+
+.content-box {
+  background-color: white;
+  border-radius: 36px;
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+/* Input File, Label, Button específicos do Index */
+.page-index input[type="file"] {
+  display: none;
+}
+.page-index label,
+.page-index button {
+  display: inline-block;
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+.page-index label {
+  background-color: var(--maida-rosa);
+  color: white;
+  margin-bottom: 10px;
+}
+.page-index label:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+.page-index button {
+  background-color: var(--maida-amarelo);
+  color: var(--maida-azul);
+  margin-top: 15px;
+}
+.page-index button:hover {
+  background-color: var(--maida-rosa);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.file-name {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--maida-azul);
+  min-height: 20px;
+}
+progress {
+  width: 100%;
+  margin-top: 15px;
+  height: 8px;
+  border-radius: 5px;
+  appearance: none;
+}
+progress::-webkit-progress-bar {
+  background-color: #eee;
+  border-radius: 5px;
+}
+progress::-webkit-progress-value {
+  background-color: var(--maida-rosa);
+  border-radius: 5px;
+}
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--maida-azul);
+  border-radius: 50%;
+  animation: spinBtn 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* --- Componentes Específicos das Páginas Resultado/Detalhes --- */
+
+.container-centralizado {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.mes-header {
+  background-color: rgba(6, 57, 112, 0.1);
+  padding: 12px 16px;
+  border-radius: 10px;
+}
+
+.info-text {
+  text-align: center;
+  color: var(--maida-azul);
+  margin-top: 30px;
+  font-size: 0.9em;
+}
+
+/* --- Seletor de Ano --- */
+.year-selector {
+  margin: 20px 0;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 5px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.year-selector label {
+  margin-right: 10px;
+  font-weight: bold;
+  color: var(--maida-azul);
+}
+
+.year-selector select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(6, 57, 112, 0.3);
+  font-size: 16px;
+  background-color: white;
+  color: var(--maida-azul);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.year-selector select:hover {
+  border-color: var(--maida-rosa);
+  box-shadow: 0 0 0 2px rgba(248, 107, 163, 0.2);
+}
+
+.year-selector select:focus {
+  outline: none;
+  border-color: var(--maida-amarelo);
+  box-shadow: 0 0 0 2px rgba(253, 215, 0, 0.3);
+}
+
+.ano-container {
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+}
+
+/* --- Animações --- */
+@property --gradient-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes girarInfinito {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fluxoContinuoBorda {
+  to { --gradient-angle: 360deg; }
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes spinBtn {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* --- Media Queries --- */
+@media (max-width: 600px) {
+  /* Ajustes Index */
+  .page-index .content-box {
+    padding: 30px 20px;
+  }
+  .page-index label,
+  .page-index button {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  /* Ajustes Resultado/Detalhes */
+  .page-resultado .btn-container,
+  .page-detalhes .btn-container {
+     flex-direction: column;
+  }
+  .page-resultado .btn,
+  .page-detalhes .btn {
+     width: 100%;
+     justify-content: center;
+  }
+
+  /* Ajustes Seletor de Ano */
+  .year-selector {
+    padding: 8px;
+  }
+  .year-selector label {
+    display: block;
+    margin-bottom: 8px;
+    margin-right: 0;
+  }
+  .year-selector select {
+    width: 100%;
+  }
+}

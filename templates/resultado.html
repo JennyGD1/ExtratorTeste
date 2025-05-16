@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Resultados - Extrator de Contracheques</title>
+</head>
+<body class="page-resultado">
+    {% include '_preloader.html' %}
+    <div class="scrollbar-container">
+        <div class="scrollbar-thumb" id="scrollThumb"></div>
+    </div>
+    
+    <div class="container-centralizado">
+        <h1>📊 Resumo Geral por Ano</h1>
+
+        <!-- Seletor de Ano -->
+        <div class="year-selector">
+            <label for="anoSelecionado">Filtrar por ano:</label>
+            <select id="anoSelecionado">
+                <option value="todos">Todos os anos</option>
+                {% for ano in resultados_por_ano.keys()|sort(reverse=True) %}
+                    <option value="{{ ano }}">{{ ano }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if resultados_por_ano %}
+            {% for ano, resultados_ano in resultados_por_ano.items()|sort(reverse=True) %}
+                <div class="ano-container" data-ano="{{ ano }}">
+                    <h2>Ano: {{ ano }}</h2>
+                    {% if resultados_ano['geral']['titular'] > 0 or resultados_ano['geral']['conjuge'] > 0 or resultados_ano['geral']['dependente'] > 0 %}
+                        <h3>Beneficiários</h3>
+                        <table>
+                            {% if resultados_ano['geral']['titular'] > 0 %}
+                                <tr><th scope="col">Titular (7033)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['titular']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['conjuge'] > 0 %}
+                                <tr><th scope="col">Cônjuge (7035)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['conjuge']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['dependente'] > 0 %}
+                                <tr><th scope="col">Dependente (7034)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['dependente']) }}</td></tr>
+                            {% endif %}
+                        </table>
+                    {% endif %}
+
+                    {% if resultados_ano['geral']['agregado_jovem'] > 0 or resultados_ano['geral']['agregado_maior'] > 0 %}
+                        <h3>Agregados</h3>
+                        <table>
+                            {% if resultados_ano['geral']['agregado_jovem'] > 0 %}
+                                <tr><th scope="col">Agregado Jovem (7038)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['agregado_jovem']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['agregado_maior'] > 0 %}
+                                <tr><th scope="col">Agregado Maior (7039)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['agregado_maior']) }}</td></tr>
+                            {% endif %}
+                        </table>
+                    {% endif %}
+
+                    {% if resultados_ano['geral']['coparticipacao'] > 0 or resultados_ano['geral']['retroativo'] > 0 or resultados_ano['geral']['parcela_risco'] > 0 or resultados_ano['geral']['plano_especial'] > 0 %}
+                        <h3>Valores Globais</h3>
+                        <table>
+                            {% if resultados_ano['geral']['coparticipacao'] > 0 %}
+                                <tr><th scope="col">Co-participação (7040)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['coparticipacao']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['retroativo'] > 0 %}
+                                <tr><th scope="col">Retroativo (7049)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['retroativo']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['parcela_risco'] > 0 %}
+                                <tr><th scope="col">Parcela de Risco (7088-7091)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['parcela_risco']) }}</td></tr>
+                            {% endif %}
+                            {% if resultados_ano['geral']['plano_especial'] > 0 %}
+                                <tr><th scope="col">Plano Especial (7037)</th><td>R$ {{ "%.2f"|format(resultados_ano['geral']['plano_especial']) }}</td></tr>
+                            {% endif %}
+                        </table>
+                    {% endif %}
+
+                    <h4>Total Consolidado para {{ ano }}</h4>
+                    <table>
+                        <tr class="total-geral">
+                            <th scope="col">Total Geral</th>
+                            <td>R$ {{ "%.2f"|format(resultados_ano['geral'].values() | sum) }}</td>
+                        </tr>
+                    </table>
+                    <hr>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Nenhum resultado encontrado.</p>
+        {% endif %}
+
+        <div class="btn-container">
+            <a href="{{ url_for('detalhes_mensais') }}" class="btn btn-secondary">
+                📅 Detalhes por Mês
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                🔄 Novo Cálculo
+            </a>
+        </div>
+
+        <p class="info-text">
+            Processado em {{ now.strftime('%d/%m/%Y às %H:%M') }}
+        </p>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const anoSelecionado = document.getElementById('anoSelecionado');
+            
+            anoSelecionado.addEventListener('change', function() {
+                const ano = this.value;
+                const anoContainers = document.querySelectorAll('.ano-container');
+                
+                anoContainers.forEach(container => {
+                    if (ano === 'todos' || container.dataset.ano === ano) {
+                        container.style.display = 'block';
+                    } else {
+                        container.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Dispara o evento change para aplicar o filtro inicial
+            anoSelecionado.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>
