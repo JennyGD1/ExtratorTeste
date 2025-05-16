@@ -193,41 +193,32 @@ def login_rh_bahia():
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
-@app.route('/buscar_contracheque_rh_bahia', methods=['POST'])
-def buscar_contracheque_rh_bahia():
-    global rh_bahia_session
-
-    if not rh_bahia_session:
-        return jsonify({"error": "Você precisa logar no RH BAHIA primeiro."}), 401
-
+@app.route('/buscar_contracheque', methods=['POST'])
+def buscar_contracheque():
     matricula = request.form.get('matricula')
-    if not matricula:
-        return jsonify({"error": "Matrícula é obrigatória."}), 400
-
+    
     try:
-        # Faz a requisição para a página de contracheques (ajuste a URL conforme necessário)
-        url_contracheque = f"{RH_BAHIA_CONTRACHEQUES_URL}?matricula={matricula}"
-        response = rh_bahia_session.get(url_contracheque)
-
-        # Verifica se a requisição foi bem-sucedida
-        if response.status_code != 200:
-            return jsonify({"error": "Falha ao buscar contracheque."}), 404
-
-        # Extrai os dados do HTML (usando BeautifulSoup)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Verifica se o usuário está logado no RH BAHIA
+        response = requests.get(
+            'https://rhbahia.ba.gov.br/api/contracheque',  # URL fictícia - substitua pela real
+            cookies=request.cookies,  # Passa os cookies da sessão
+            params={'matricula': matricula},
+            timeout=10
+        )
         
-        # Exemplo: Extrai valores do contracheque (ajuste conforme o HTML do RH BAHIA)
-        dados = {
-            "mes_ano": soup.find("span", class_="periodo").text.strip() if soup.find("span", class_="periodo") else "Não identificado",
-            "salario": soup.find("td", class_="salario").text.strip() if soup.find("td", class_="salario") else "0,00",
-            "descontos": soup.find("td", class_="descontos").text.strip() if soup.find("td", class_="descontos") else "0,00",
-        }
-
-        return jsonify({"success": True, "dados": dados})
-
+        if response.status_code == 401:
+            return jsonify({
+                "error": "Faça login no RH BAHIA primeiro",
+                "login_url": "https://rhbahia.ba.gov.br/login"
+            }), 401
+        
+        # Processa os dados do contracheque
+        dados = parse_contracheque(response.json())  # Função que você implementa
+        return jsonify(dados)
+        
     except Exception as e:
         logger.error(f"Erro ao buscar contracheque: {str(e)}")
-        return jsonify({"error": "Erro interno ao processar o contracheque."}), 500
+        return jsonify({"error": "Erro ao conectar com o RH BAHIA"}), 500
         
 # Rota Index (igual)
 @app.route('/')
