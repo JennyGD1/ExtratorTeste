@@ -10,6 +10,21 @@
  </head>
 <body class="page-index">
   {% include '_preloader.html' %}
+  <div id="rh-bahia-section">
+    <h2>Buscar Contracheque do RH BAHIA</h2>
+    <form id="formLoginRhBahia">
+        <input type="text" name="username" placeholder="Usuário RH BAHIA" required>
+        <input type="password" name="password" placeholder="Senha" required>
+        <button type="submit">Logar</button>
+    </form>
+
+    <form id="formBuscarContracheque" style="display: none;">
+        <input type="text" name="matricula" placeholder="Matrícula" required>
+        <button type="submit">Buscar Contracheque</button>
+    </form>
+
+    <div id="resultadoRhBahia"></div>
+</div>
         <div class="logo">
       <img src="{{ url_for('static', filename='img/logo_maida.png') }}" alt="Logo da Maida Health" loading="lazy">
     </div>
@@ -117,6 +132,45 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.hidden = true;
     }
   });
+    // Login no RH BAHIA
+    document.getElementById("formLoginRhBahia").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        const response = await fetch("/login_rh_bahia", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            document.getElementById("formBuscarContracheque").style.display = "block";
+        }
+        document.getElementById("resultadoRhBahia").innerHTML = result.message || result.error;
+    });
+
+    // Buscar contracheque
+    document.getElementById("formBuscarContracheque").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        const response = await fetch("/buscar_contracheque_rh_bahia", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            const dados = result.dados;
+            document.getElementById("resultadoRhBahia").innerHTML = `
+                <h3>Contracheque (${dados.mes_ano})</h3>
+                <p>Salário: ${dados.salario}</p>
+                <p>Descontos: ${dados.descontos}</p>
+            `;
+        } else {
+            document.getElementById("resultadoRhBahia").innerHTML = result.error;
+        }
+    });
 });
 </script>
 
