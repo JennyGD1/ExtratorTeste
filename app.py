@@ -3,13 +3,27 @@ import re
 import os
 import urllib3
 from urllib3.exceptions import MaxRetryError, TimeoutError
-from flask import Flask, render_template, request, jsonify, session, redirect, flash
+from flask import Flask, render_template, request, jsonify, session, redirect, flash, url_for
 from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 app.secret_key = 'sua-chave-secreta-aqui'
+
+# Configuração de logging
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler('logs/app.log', maxBytes=1000000, backupCount=3),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Configurações
 RH_BAHIA_BASE_URL = "https://rhbahia.ba.gov.br"
@@ -18,11 +32,10 @@ CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/
 # Configuração do urllib3 com timeout aumentado
 http = urllib3.PoolManager(
     timeout=urllib3.Timeout(connect=10.0, read=30.0),
-    retries=urllib3.Retry(3)  # Tenta 3 vezes antes de desistir
+    retries=urllib3.Retry(3, redirect=2)
 )
-logger = logging.getLogger(__name__)
 
-# Dicionário de códigos de cobrança (atualize conforme necessário)
+# Dicionário de códigos de cobrança
 CODIGOS_COBRANCA = {
     '7033': 'Titular',
     '7035': 'Cônjuge',
@@ -38,18 +51,24 @@ CODIGOS_COBRANCA = {
     '7091': 'Parcela de Risco'
 }
 
+def validar_pdf(content):
+    """Verifica se o conteúdo parece ser um PDF válido"""
+    return content and len(content) > 100 and content.startswith(b'%PDF')
+
 def processar_contracheque_pdf(pdf_content):
     """Processa o conteúdo PDF do contracheque e extrai os valores"""
     try:
+        if not validar_pdf(pdf_content):
+            raise ValueError("Arquivo PDF inválido ou vazio")
+            
         doc = fitz.open(stream=pdf_content, filetype="pdf")
         texto = ""
         for page in doc:
             texto += page.get_text()
         
         valores = {}
-        # Procura por cada código de cobrança no texto
         for codigo, descricao in CODIGOS_COBRANCA.items():
-            padrao = rf"{codigo}.*?(\d+,\d{2})"
+            padrao = rf"{codigo}.*?(\d+,\d{{2}})"
             match = re.search(padrao, texto)
             if match:
                 valor = float(match.group(1).replace(',', '.'))
@@ -70,9 +89,12 @@ def index():
 def buscar_contracheques():
     try:
         data = request.get_json()
+        if not data or 'matricula' not in data:
+            return jsonify({"error": "Dados inválidos"}), 400
+            
         matricula = data['matricula']
-        ano_inicial = int(data['ano_inicial'])
-        ano_final = int(data['ano_final'])
+        ano_inicial = int(data.get('ano_inicial', 0))
+        ano_final = int(data.get('ano_final', 0))
         
         if ano_final < ano_inicial:
             return jsonify({
@@ -96,9 +118,9 @@ def buscar_contracheques():
                         'GET',
                         url,
                         headers={
-                            'User-Agent': 'Mozilla/5.0',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
                             'Referer': RH_BAHIA_BASE_URL,
-                            'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()])
+                            'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()]) if request.cookies else ''
                         }
                     )
                     
@@ -112,17 +134,21 @@ def buscar_contracheques():
                         logger.warning(f"Erro ao acessar {url} - Status: {response.status}")
                         continue
                     
-                    # Processa o PDF
-                    valores = processar_contracheque_pdf(response.data)
-                    if valores:
-                        resultados.append({
-                            'mes': f"{mes:02d}/{ano}",
-                            'url': url,
-                            'valores': valores
-                        })
+                    # Valida e processa o PDF
+                    if validar_pdf(response.data):
+                        valores = processar_contracheque_pdf(response.data)
+                        if valores:
+                            resultados.append({
+                                'mes': f"{mes:02d}/{ano}",
+                                'url': url,
+                                'valores': valores
+                            })
                     
                 except (MaxRetryError, TimeoutError) as e:
-                    logger.error(f"Erro ao processar {mes}/{ano}: {str(e)}")
+                    logger.error(f"Erro de conexão ao acessar {url}: {str(e)}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Erro inesperado ao processar {mes}/{ano}: {str(e)}")
                     continue
         
         if not resultados:
@@ -144,7 +170,7 @@ def buscar_contracheques():
         })
     
     except Exception as e:
-        logger.error(f"Erro geral: {str(e)}")
+        logger.error(f"Erro geral na busca: {str(e)}", exc_info=True)
         return jsonify({
             'error': "Erro ao processar sua solicitação",
             'login_url': f"{RH_BAHIA_BASE_URL}/login"
