@@ -225,20 +225,6 @@ footer {
     display: none;
   }
 }
-/* Restaurando cores originais */
-body.page-index {
-  background-color: #1a237e; /* Azul escuro original */
-  color: #ffffff;
-}
-
-h1, .info-box, .form-group label, .range-group span {
-  color: #2196f3; /* Azul claro original */
-}
-
-.link-externo {
-  color: #2196f3; /* Azul claro original */
-}
-
 /* Animação de carregamento com porcentagem */
 .process-btn.loading {
   position: relative;
