@@ -59,68 +59,94 @@
     Desenvolvido por Jennifer Lima
   </footer>
 
-  <script>
-    // Preloader
-    window.addEventListener('load', () => {
-      const preloader = document.getElementById('preloader');
-      if (preloader) {
-        preloader.style.opacity = '0';
-        setTimeout(() => preloader.style.display = 'none', 500);
-      }
-    });
+ <script>
+  // Preloader
+  window.addEventListener('load', () => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      preloader.style.opacity = '0';
+      setTimeout(() => preloader.style.display = 'none', 500);
+    }
+  });
 
-    // Preencher anos dinamicamente (2019 a 2025)
-    const selectAnoInicial = document.getElementById('ano-inicial');
-    const selectAnoFinal = document.getElementById('ano-final');
+  // Preencher anos dinamicamente (2019 a 2025)
+  const selectAnoInicial = document.getElementById('ano-inicial');
+  const selectAnoFinal = document.getElementById('ano-final');
+  
+  for (let ano = 2019; ano <= 2025; ano++) {
+    selectAnoInicial.innerHTML += `<option value="${ano}">${ano}</option>`;
+    selectAnoFinal.innerHTML += `<option value="${ano}">${ano}</option>`;
+  }
+
+  // Configurar ano final como padrão para o atual
+  selectAnoFinal.value = new Date().getFullYear();
+
+  // Busca de contracheques - NOVA VERSÃO COM ANIMAÇÃO
+  document.getElementById('formContracheque').addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    for (let ano = 2019; ano <= 2025; ano++) {
-      selectAnoInicial.innerHTML += `<option value="${ano}">${ano}</option>`;
-      selectAnoFinal.innerHTML += `<option value="${ano}">${ano}</option>`;
+    const btn = document.querySelector('.process-btn');
+    const matricula = document.getElementById('matricula').value;
+    const anoInicial = document.getElementById('ano-inicial').value;
+    const anoFinal = document.getElementById('ano-final').value;
+    
+    if (!matricula || !anoInicial || !anoFinal) {
+      alert('Preencha todos os campos corretamente');
+      return;
     }
 
-    // Configurar ano final como padrão para o atual
-    selectAnoFinal.value = new Date().getFullYear();
+    // Ativar estado de loading
+    btn.classList.add('loading');
+    
+    try {
+      const response = await fetch('/buscar_contracheques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matricula: matricula,
+          ano_inicial: anoInicial,
+          ano_final: anoFinal
+        })
+      });
 
-    // Busca de contracheques
-    document.getElementById('formContracheque').addEventListener('submit', async (e) => {
-      e.preventDefault();
+      // Remover loading
+      btn.classList.remove('loading');
       
-      const matricula = document.getElementById('matricula').value;
-      const anoInicial = document.getElementById('ano-inicial').value;
-      const anoFinal = document.getElementById('ano-final').value;
-      
-      if (!matricula || !anoInicial || !anoFinal) {
-        alert('Preencha todos os campos corretamente');
+      if (response.status === 401) {
+        // Estado de erro
+        btn.classList.add('error');
+        setTimeout(() => {
+          btn.classList.remove('error');
+          window.open('https://rhbahia.ba.gov.br/login', '_blank');
+        }, 1000);
+        alert('Faça login no RH BAHIA primeiro!');
         return;
       }
 
-      try {
-        const response = await fetch('/buscar_contracheques', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            matricula: matricula,
-            ano_inicial: anoInicial,
-            ano_final: anoFinal
-          })
-        });
-
-        const result = await response.json();
-        
-        if (response.status === 401) {
-          window.open('https://rhbahia.ba.gov.br/login', '_blank');
-          alert('Faça login no RH BAHIA primeiro!');
-          return;
-        }
-
-        // Redireciona para a página de resultados
-        window.location.href = "/resultados";
-        
-      } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao buscar contracheques');
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Estado de sucesso
+        btn.classList.add('complete');
+        setTimeout(() => {
+          window.location.href = "/resultados";
+        }, 1000);
+      } else {
+        // Estado de erro
+        btn.classList.add('error');
+        setTimeout(() => btn.classList.remove('error'), 2000);
+        alert(result.message || 'Erro ao buscar contracheques');
       }
-    });
-  </script>
+      
+    } catch (error) {
+      // Estado de erro
+      btn.classList.remove('loading');
+      btn.classList.add('error');
+      setTimeout(() => btn.classList.remove('error'), 2000);
+      console.error('Erro:', error);
+      alert('Erro na conexão com o servidor');
+    }
+  });
+</script>
 </body>
 </html>
