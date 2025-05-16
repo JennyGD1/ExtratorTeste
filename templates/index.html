@@ -3,12 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extrator de Contracheques - Maida Health</title>
-  <!-- CSS Global -->
+  <title>Calculadora de Contracheques - Maida Health</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-  <!-- CSS Específico -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/preloader.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
   <link rel="icon" href="{{ url_for('static', filename='img/logo_maida.png') }}">
 </head>
@@ -16,11 +12,10 @@
   {% include '_preloader.html' %}
   
   <div class="logo">
-    <img src="{{ url_for('static', filename='img/logo_maida.png') }}" alt="Logo da Maida Health" loading="lazy">
+    <img src="{{ url_for('static', filename='img/logo_maida.png') }}" alt="Logo Maida Health">
   </div>
 
   <main>
-    <!-- Seção da Calculadora -->
     <div class="borda-animada">
       <div class="content-box">
         <h1><strong>Calculadora de Mensalidades</strong></h1>
@@ -28,29 +23,34 @@
         <div class="info-box">
           <p>⚠️ Para usar esta ferramenta:</p>
           <ol>
-            <li>Faça login no <a href="https://rhbahia.ba.gov.br/login" target="_blank">RH BAHIA</a></li>
+            <li>Faça login no <a href="https://rhbahia.ba.gov.br/login" target="_blank" class="link-externo">RH BAHIA</a></li>
             <li>Volte para esta página</li>
-            <li>Selecione os arquivos ou informe a matrícula</li>
           </ol>
         </div>
 
-        <!-- Opção 1: Upload de PDF -->
-        <div class="upload-section">
-          <input type="file" id="file-upload" multiple hidden aria-label="Selecionar arquivos">
-          <label for="file-upload" class="upload-btn">📁 Escolher Arquivos PDF</label>
-          <p id="file-name" class="file-name" aria-live="polite">Nenhum arquivo selecionado</p>
-          <button type="button" id="process-pdf" class="process-btn" aria-busy="false">Processar PDFs</button>
-          <progress id="upload-progress" value="0" max="100" hidden></progress>
-        </div>
+        <form id="formContracheque">
+          <div class="form-group">
+            <label for="matricula">Matrícula:</label>
+            <input type="text" id="matricula" name="matricula" placeholder="Ex: 11078138" required>
+          </div>
+          
+          <div class="form-group range-group">
+            <label>Período:</label>
+            <div class="range-inputs">
+              <select id="ano-inicial" name="ano_inicial" required>
+                <option value="">Ano inicial</option>
+                <!-- Os anos serão preenchidos via JavaScript -->
+              </select>
+              <span>até</span>
+              <select id="ano-final" name="ano_final" required>
+                <option value="">Ano final</option>
+                <!-- Os anos serão preenchidos via JavaScript -->
+              </select>
+            </div>
+          </div>
 
-        <!-- Opção 2: Busca por matrícula (após login externo) -->
-        <div class="matricula-section" style="margin-top: 30px;">
-          <h3>Ou busque diretamente por matrícula</h3>
-          <form id="formContracheque">
-            <input type="text" class="input-field" name="matricula" placeholder="Digite sua matrícula" required>
-            <button type="submit" class="process-btn">Buscar Contracheque</button>
-          </form>
-        </div>
+          <button type="submit" class="process-btn">Iniciar</button>
+        </form>
       </div>
     </div>
   </main>
@@ -59,17 +59,9 @@
     Desenvolvido por Jennifer Lima
   </footer>
 
-  <div class="bg-shapes">
-    <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
-      <g transform="translate(300,300)">
-        <path d="M150,-164C198,-122,235,-61,230,-4.6C225,51,178,102,130,146C82,190,34,228,-20,236C-73,244,-145,221,-176,172C-207,123,-197,48,-180,-20C-163,-89,-138,-151,-94,-190C-50,-229,13,-244,75,-231C137,-218,199,-176,150,-164Z" fill="rgba(255, 255, 255, 0.05)"/>
-      </g>
-    </svg>
-  </div>
-
   <script>
     // Preloader
-    window.addEventListener('load', function() {
+    window.addEventListener('load', () => {
       const preloader = document.getElementById('preloader');
       if (preloader) {
         preloader.style.opacity = '0';
@@ -77,60 +69,62 @@
       }
     });
 
-    setTimeout(() => {
-      const preloader = document.getElementById('preloader');
-      if (preloader && preloader.style.display !== 'none') {
-        preloader.style.opacity = '0';
-        setTimeout(() => preloader.style.display = 'none', 500);
-      }
-    }, 5000);
+    // Preencher anos dinamicamente (últimos 5 anos)
+    const anoAtual = new Date().getFullYear();
+    const selectAnoInicial = document.getElementById('ano-inicial');
+    const selectAnoFinal = document.getElementById('ano-final');
+    
+    for (let i = 0; i < 5; i++) {
+      const ano = anoAtual - i;
+      selectAnoInicial.innerHTML += `<option value="${ano}">${ano}</option>`;
+      selectAnoFinal.innerHTML += `<option value="${ano}">${ano}</option>`;
+    }
 
-    // Upload de PDFs
-    document.getElementById('file-upload').addEventListener('change', function() {
-      const fileNameText = document.getElementById('file-name');
-      if (this.files.length === 0) {
-        fileNameText.textContent = 'Nenhum arquivo selecionado';
-      } else {
-        fileNameText.textContent = this.files.length === 1 
-          ? this.files[0].name 
-          : `${this.files.length} arquivos selecionados`;
-      }
-    });
+    // Configurar ano final como padrão para o atual
+    selectAnoFinal.value = anoAtual;
 
-    document.getElementById('process-pdf').addEventListener('click', async function() {
-      const files = document.getElementById('file-upload').files;
-      if (!files || files.length === 0) {
-        alert('Selecione pelo menos um arquivo PDF');
-        return;
-      }
-      
-      // Seu código de processamento de PDFs
-    });
-
-    // Busca por matrícula
+    // Busca de contracheques
     document.getElementById('formContracheque').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const matricula = e.target.matricula.value;
+      
+      const matricula = document.getElementById('matricula').value;
+      const anoInicial = document.getElementById('ano-inicial').value;
+      const anoFinal = document.getElementById('ano-final').value;
+      
+      if (!matricula || !anoInicial || !anoFinal) {
+        alert('Preencha todos os campos corretamente');
+        return;
+      }
+
+      // Exemplo de URL que será construída:
+      // https://rhbahia.ba.gov.br/auditor/contracheque/file/pdf/2024/01/1/11078138
       
       try {
-        const response = await fetch('/buscar_contracheque', {
+        // Aqui você fará a requisição para seu backend
+        const response = await fetch('/buscar_contracheques', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `matricula=${matricula}`
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matricula: matricula,
+            ano_inicial: anoInicial,
+            ano_final: anoFinal
+          })
         });
+
+        const result = await response.json();
         
         if (response.status === 401) {
           window.open('https://rhbahia.ba.gov.br/login', '_blank');
           alert('Faça login no RH BAHIA primeiro!');
           return;
         }
-        
-        const result = await response.json();
+
         // Processar os resultados aqui
+        console.log(result);
         
       } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao buscar contracheque');
+        alert('Erro ao buscar contracheques');
       }
     });
   </script>
