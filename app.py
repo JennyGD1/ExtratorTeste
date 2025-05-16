@@ -10,6 +10,10 @@ from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
 app.secret_key = 'sua-chave-secreta-aqui'
 
+RH_BAHIA_LOGIN_URL = "https://rhbahia.com.br/login"  # Substitua pela URL real
+RH_BAHIA_CONTRACHEQUES_URL = "https://rhbahia.com.br/contracheques"  # URL base
+rh_bahia_session = None
+
 # Configuração do logger (igual ao anterior)
 logging.basicConfig(
     level=logging.DEBUG,
@@ -159,6 +163,72 @@ def processar_pdf(caminho_pdf):
         logger.error(f"Erro ao processar PDF {caminho_pdf}: {str(e)}", exc_info=True)
         return []  # Retorna uma lista vazia em caso de erro
 
+@app.route('/login_rh_bahia', methods=['POST'])
+def login_rh_bahia():
+    global rh_bahia_session
+
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    if not username or not password:
+        return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
+
+    try:
+        session = requests.Session()
+        login_payload = {
+            "usuario": username,
+            "senha": password
+        }
+        response = session.post(RH_BAHIA_LOGIN_URL, data=login_payload)
+
+        # Verifique se o login foi bem-sucedido (ajuste conforme o comportamento do site)
+        if "Bem-vindo" in response.text or response.status_code == 200:
+            rh_bahia_session = session  # Armazena a sessão globalmente (apenas para demo)
+            return jsonify({"success": True, "message": "Login realizado com sucesso!"})
+        else:
+            return jsonify({"error": "Falha no login. Verifique suas credenciais."}), 401
+
+    except Exception as e:
+        logger.error(f"Erro ao logar no RH BAHIA: {str(e)}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
+@app.route('/buscar_contracheque_rh_bahia', methods=['POST'])
+def buscar_contracheque_rh_bahia():
+    global rh_bahia_session
+
+    if not rh_bahia_session:
+        return jsonify({"error": "Você precisa logar no RH BAHIA primeiro."}), 401
+
+    matricula = request.form.get('matricula')
+    if not matricula:
+        return jsonify({"error": "Matrícula é obrigatória."}), 400
+
+    try:
+        # Faz a requisição para a página de contracheques (ajuste a URL conforme necessário)
+        url_contracheque = f"{RH_BAHIA_CONTRACHEQUES_URL}?matricula={matricula}"
+        response = rh_bahia_session.get(url_contracheque)
+
+        # Verifica se a requisição foi bem-sucedida
+        if response.status_code != 200:
+            return jsonify({"error": "Falha ao buscar contracheque."}), 404
+
+        # Extrai os dados do HTML (usando BeautifulSoup)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Exemplo: Extrai valores do contracheque (ajuste conforme o HTML do RH BAHIA)
+        dados = {
+            "mes_ano": soup.find("span", class_="periodo").text.strip() if soup.find("span", class_="periodo") else "Não identificado",
+            "salario": soup.find("td", class_="salario").text.strip() if soup.find("td", class_="salario") else "0,00",
+            "descontos": soup.find("td", class_="descontos").text.strip() if soup.find("td", class_="descontos") else "0,00",
+        }
+
+        return jsonify({"success": True, "dados": dados})
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar contracheque: {str(e)}")
+        return jsonify({"error": "Erro interno ao processar o contracheque."}), 500
+        
 # Rota Index (igual)
 @app.route('/')
 def index():
