@@ -34,10 +34,10 @@ CONTRACHEQUE_URL_TEMPLATE = RH_BAHIA_BASE_URL + "/auditor/contracheque/file/pdf/
 
 # Configuração do urllib3 com timeout aumentado
 http = urllib3.PoolManager(
-    timeout=urllib3.Timeout(connect=120.0, read=60.0),
+    timeout=urllib3.Timeout(connect=30.0, read=30.0),  # Reduzir para 30 segundos
     retries=urllib3.Retry(
         total=3,
-        backoff_factor=2, # Aumentando o backoff factor
+        backoff_factor=1,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -126,43 +126,24 @@ def buscar_contracheques():
         if ano_final < ano_inicial:
             return jsonify({
                 "error": "O ano final não pode ser menor que o inicial",
-                "login_url": f"{RH_BAHIA_BASE_URL}/login" # Manter URL de login para referência
+                "login_url": f"{RH_BAHIA_BASE_URL}/login"
             }), 400
 
         resultados = []
         erros_mes = []
         
-        # Headers (Atenção à questão dos cookies explicada anteriormente)
-        # Idealmente, o cookie de sessão do RH Bahia deveria ser injetado aqui.
-        # Por agora, vamos manter como estava, mas ciente da limitação.
+        # Configuração otimizada de headers
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Referer': RH_BAHIA_BASE_URL,
-            'Accept': 'application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9', # Aceitar mais tipos pode ajudar
-            'X-Requested-With': 'XMLHttpRequest',
-            # A linha abaixo pega os cookies enviados PELO NAVEGADOR DO USUÁRIO PARA O SEU APP FLASK.
-            # Estes NÃO SÃO os cookies da sessão do usuário no site rhbahia.ba.gov.br
-            # a menos que haja uma configuração de proxy muito específica.
-            # 'Cookie': '; '.join([f'{k}={v}' for k, v in request.cookies.items()]) if request.cookies else ''
-            # Para testes, você poderia hardcodar um cookie válido aqui se obtiver um:
-            # 'Cookie': 'JSESSIONID=SEU_COOKIE_AQUI_DO_RHBAHIA' # Exemplo
+            'Accept': 'application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'X-Requested-With': 'XMLHttpRequest'
         }
         
-        # Adicionar um cookie de sessão específico, se você conseguir capturá-lo após o login no RH Bahia
-        # Este é um ponto CRUCIAL para acesso a dados protegidos.
-        # Se o RH Bahia usa um cookie chamado, por exemplo, 'portal_session_id', você precisaria dele.
-        # Exemplo: headers['Cookie'] = 'portal_session_id=valor_do_cookie_capturado'
-
-        # Tentar obter o cookie de sessão do RH Bahia do cliente, se ele for enviado (improvável entre domínios)
-        # Ou, se você tem uma forma de o usuário fornecer o cookie:
-        rh_bahia_cookie = data.get('rh_bahia_session_cookie') # Supondo que o frontend possa enviar
-        if rh_bahia_cookie:
-             headers['Cookie'] = rh_bahia_cookie
-        elif request.cookies: # Fallback para o que você tinha, mas com ressalvas
-             # logger.warning("Usando cookies da requisição do cliente para o servidor Flask. Estes podem não ser os cookies de sessão do RH Bahia.")
-             # headers['Cookie'] = '; '.join([f'{k}={v}' for k, v in request.cookies.items()])
-             pass # Melhor não enviar cookies incorretos. A autenticação precisa ser tratada de forma mais robusta.
-
+        # Verifica se há cookie de sessão específico nos dados da requisição
+        if 'rh_bahia_session_cookie' in data:
+            headers['Cookie'] = data['rh_bahia_session_cookie']
+            logger.info("Cookie de sessão do RH Bahia detectado nos dados da requisição")
 
         logger.info(f"Iniciando busca para matrícula {matricula}, período {ano_inicial}-{ano_final}")
         
@@ -178,84 +159,83 @@ def buscar_contracheques():
                 logger.info(f"Tentando {mes_ano_str} ({mes_processado_idx}/{num_total_meses}): {url}")
                 
                 try:
-                    response = http.request('GET', url, headers=headers, preload_content=False) # preload_content=False para liberar conexão mais rápido
-                    # response.read() será chamado depois, ou response.data usado
+                    # Timeout reduzido para 30 segundos (conexão) e 30 segundos (leitura)
+                    response = http.request('GET', url, headers=headers, timeout=30.0, preload_content=False)
 
                     if response.status == 401:
-                        logger.warning(f"Falha de autenticação (401) para {url}. O usuário precisa estar logado no RH Bahia e a sessão ativa/correta.")
-                        # Não retorna imediatamente, tenta outros meses, mas avisa sobre o problema de login
-                        # Se isso acontecer consistentemente, toda a busca falhará.
-                        # Considerar retornar um erro aqui se for o primeiro mês e der 401.
-                        if not resultados: # Se for o primeiro e já deu 401
-                             return jsonify({
-                                "error": f"Falha de autenticação (401) ao acessar {RH_BAHIA_BASE_URL}. Verifique se está logado no portal RH Bahia e tente novamente. Se o problema persistir, o método de autenticação pode precisar ser revisto.",
-                                "login_url": f"{RH_BAHIA_BASE_URL}/login"
+                        error_msg = f"Falha de autenticação (401) para {url}. Verifique se está logado no portal RH Bahia."
+                        logger.warning(error_msg)
+                        if not resultados:
+                            return jsonify({
+                                "error": error_msg,
+                                "login_url": f"{RH_BAHIA_BASE_URL}/login",
+                                "requires_auth": True
                             }), 401
-                        erros_mes.append(f"{mes_ano_str}: Falha de autenticação (401)")
-                        continue # Pula para o próximo mês
+                        erros_mes.append(f"{mes_ano_str}: Falha de autenticação")
+                        continue
 
                     if response.status != 200:
                         logger.warning(f"Erro HTTP {response.status} ao acessar {url}")
                         erros_mes.append(f"{mes_ano_str}: Erro HTTP {response.status}")
-                        response.release_conn() # Garante que a conexão é liberada
+                        response.release_conn()
                         continue
                     
-                    pdf_data = response.data # Lê o conteúdo aqui
-                    response.release_conn() # Libera a conexão de volta ao pool
+                    pdf_data = response.data
+                    response.release_conn()
 
-                    if validar_pdf(pdf_data):
-                        valores = processar_contracheque_pdf(pdf_data, mes_ano_str)
-                        if valores:
-                            resultados.append({
-                                'mes': mes_ano_str,
-                                'url': url, # Pode ser útil para depuração ou download manual pelo usuário
-                                'valores': valores
-                            })
-                            logger.info(f"Sucesso ao processar {mes_ano_str}. Valores: {valores}")
-                        else:
-                            logger.info(f"Nenhum código de cobrança encontrado em {mes_ano_str} (PDF válido, mas sem dados de interesse).")
-                            # Você pode optar por adicionar uma entrada vazia ou uma com erro específico
-                            erros_mes.append(f"{mes_ano_str}: PDF válido, mas nenhum código encontrado.")
+                    if not validar_pdf(pdf_data):
+                        logger.warning(f"Conteúdo de {url} não é um PDF válido")
+                        erros_mes.append(f"{mes_ano_str}: Arquivo inválido")
+                        continue
+
+                    valores = processar_contracheque_pdf(pdf_data, mes_ano_str)
+                    if valores:
+                        resultados.append({
+                            'mes': mes_ano_str,
+                            'url': url,
+                            'valores': valores
+                        })
+                        logger.info(f"Sucesso ao processar {mes_ano_str}")
                     else:
-                        logger.warning(f"Conteúdo de {url} não é um PDF válido ou está vazio. Status: {response.status}")
-                        erros_mes.append(f"{mes_ano_str}: Arquivo não é PDF ou está corrompido.")
+                        logger.info(f"Nenhum código encontrado em {mes_ano_str}")
+                        erros_mes.append(f"{mes_ano_str}: Sem dados de cobrança")
                 
                 except (MaxRetryError, Urllib3ConnectTimeoutError, TimeoutError, NewConnectionError) as e:
-                    logger.error(f"Timeout/Erro de Conexão para {url}: {str(e)}")
-                    erros_mes.append(f"{mes_ano_str}: Timeout ou erro de conexão com o servidor RH Bahia.")
-                    # response.release_conn() # Se o response existir e a conexão não foi liberada
-                    continue # Pula para o próximo mês
+                    logger.error(f"Erro de conexão para {url}: {str(e)}")
+                    erros_mes.append(f"{mes_ano_str}: Erro de conexão")
+                    continue
                 except Exception as e_inner:
                     logger.error(f"Erro inesperado ao processar {url}: {str(e_inner)}", exc_info=True)
-                    erros_mes.append(f"{mes_ano_str}: Erro inesperado durante processamento.")
+                    erros_mes.append(f"{mes_ano_str}: Erro inesperado")
                     continue
 
-                # Adiciona um pequeno delay para não sobrecarregar o servidor do RH Bahia
-                time.sleep(0.5) # 0.5 segundos de delay entre requisições
+                # Delay entre requisições para evitar sobrecarga
+                time.sleep(0.5)
 
-        if not resultados and not erros_mes: # Nenhuma tentativa foi bem sucedida ou falhou, estranho
-             logger.warning("Nenhum resultado e nenhum erro registrado. Verificar lógica.")
-             return jsonify({
-                "error": "Nenhum contracheque encontrado ou processado. O servidor RH Bahia pode estar inacessível ou não há dados para o período.",
-                "login_url": f"{RH_BAHIA_BASE_URL}/login",
-                "status_code": 503 # Service Unavailable
-             }), 503
-        
-        if not resultados and erros_mes: # Nenhum sucesso, mas houve erros
-            logger.info(f"Nenhum contracheque encontrado com sucesso. Erros: {erros_mes}")
-            return jsonify({
-                "error": "Não foi possível buscar os contracheques. Verifique os detalhes abaixo.",
-                "details": erros_mes,
-                "login_url": f"{RH_BAHIA_BASE_URL}/login",
-                "status_code": 502 # Bad Gateway (problema com o upstream)
-            }), 502
+        # Tratamento dos resultados finais
+        if not resultados:
+            if erros_mes:
+                logger.info(f"Busca concluída sem sucesso. Erros: {erros_mes}")
+                return jsonify({
+                    "error": "Não foi possível obter contracheques",
+                    "details": erros_mes,
+                    "login_url": f"{RH_BAHIA_BASE_URL}/login",
+                    "status_code": 502
+                }), 502
+            else:
+                logger.warning("Nenhum resultado obtido sem erros registrados")
+                return jsonify({
+                    "error": "Servidor RH Bahia não respondeu",
+                    "status_code": 503
+                }), 503
 
+        # Armazenamento na sessão
         session['resultados'] = resultados
         session['matricula'] = matricula
         session['periodo'] = f"{ano_inicial}-{ano_final}"
-        session['erros_mes'] = erros_mes # Armazena também os erros para exibir
+        session['erros_mes'] = erros_mes
         
-        logger.info(f"Busca finalizada para {matricula}. {len(resultados)} contracheques encontrados. {len(erros_mes)} meses com erro.")
+        logger.info(f"Busca finalizada: {len(resultados)} sucessos, {len(erros_mes)} erros")
         
         return jsonify({
             'success': True,
@@ -263,18 +243,16 @@ def buscar_contracheques():
             'periodo': f"{ano_inicial}-{ano_final}",
             'quantidade_sucesso': len(resultados),
             'quantidade_erros': len(erros_mes),
-            'message': f"{len(resultados)} contracheques processados com sucesso. {len(erros_mes)} meses apresentaram problemas." if erros_mes else f"{len(resultados)} contracheques processados com sucesso."
-            # 'redirect_url': url_for('mostrar_resultados') # O frontend já faz o redirect
+            'message': f"{len(resultados)} contracheques processados. {len(erros_mes)} meses com problemas." if erros_mes else "Todos os contracheques processados com sucesso."
         })
     
     except Exception as e_outer:
-        logger.error(f"Erro geral na função buscar_contracheques: {str(e_outer)}", exc_info=True)
+        logger.error(f"Erro geral: {str(e_outer)}", exc_info=True)
         return jsonify({
-            'error': "Ocorreu um erro inesperado ao processar sua solicitação.",
+            'error': "Erro interno ao processar solicitação",
             'details': str(e_outer),
-            'login_url': f"{RH_BAHIA_BASE_URL}/login"
+            'status_code': 500
         }), 500
-
 @app.route('/resultados')
 def mostrar_resultados():
     if 'resultados' not in session and 'erros_mes' not in session: # Se não há nem resultados nem erros
