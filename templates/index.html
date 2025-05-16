@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Extrator de Contracheques - Maida Health</title>
-    <!-- CSS Global -->
+  <!-- CSS Global -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
   <!-- CSS Específico -->
@@ -20,36 +20,37 @@
   </div>
 
   <main>
+    <!-- Seção da Calculadora -->
     <div class="borda-animada">
       <div class="content-box">
         <h1><strong>Calculadora de Mensalidades</strong></h1>
-        <input type="file" id="file-upload" multiple hidden aria-label="Selecionar arquivos">
-        <label for="file-upload" class="upload-btn">📁 Escolher Arquivos</label>
-        <p id="file-name" class="file-name" aria-live="polite">Nenhum arquivo selecionado</p>
-        <button type="button" class="process-btn" aria-busy="false">Processar</button>
-        <progress id="upload-progress" value="0" max="100" hidden></progress>
-      </div>
-    </div>
-
-    <!-- Seção RH BAHIA -->
-    <div class="borda-animada" style="margin-top: 30px;">
-      <div class="content-box">
-        <h2><strong>Buscar Contracheque do RH BAHIA</strong></h2>
         
-        <form id="formLoginRhBahia" class="form-rh">
-          <input type="text" class="input-field" name="username" placeholder="Usuário" required>
-          <input type="password" class="input-field" name="password" placeholder="Senha" required>
-          <button type="submit" class="upload-btn">Logar</button>
-        </form>
+        <div class="info-box">
+          <p>⚠️ Para usar esta ferramenta:</p>
+          <ol>
+            <li>Faça login no <a href="https://rhbahia.ba.gov.br/login" target="_blank">RH BAHIA</a></li>
+            <li>Volte para esta página</li>
+            <li>Selecione os arquivos ou informe a matrícula</li>
+          </ol>
+        </div>
 
-        <form id="formBuscarContracheque" class="form-rh" style="display: none;">
-          <input type="text" class="input-field" name="matricula" placeholder="Matrícula" pattern="\d+" required>
-          <button type="submit" class="upload-btn">Buscar Contracheque</button>
-          <button type="button" id="logoutRhBahia" class="process-btn" style="margin-top: 10px;">Sair</button>
-        </form>
+        <!-- Opção 1: Upload de PDF -->
+        <div class="upload-section">
+          <input type="file" id="file-upload" multiple hidden aria-label="Selecionar arquivos">
+          <label for="file-upload" class="upload-btn">📁 Escolher Arquivos PDF</label>
+          <p id="file-name" class="file-name" aria-live="polite">Nenhum arquivo selecionado</p>
+          <button type="button" id="process-pdf" class="process-btn" aria-busy="false">Processar PDFs</button>
+          <progress id="upload-progress" value="0" max="100" hidden></progress>
+        </div>
 
-        <div id="rh-bahia-error" class="error-message" style="display: none;"></div>
-        <div id="resultadoRhBahia" class="resultado-container"></div>
+        <!-- Opção 2: Busca por matrícula (após login externo) -->
+        <div class="matricula-section" style="margin-top: 30px;">
+          <h3>Ou busque diretamente por matrícula</h3>
+          <form id="formContracheque">
+            <input type="text" class="input-field" name="matricula" placeholder="Digite sua matrícula" required>
+            <button type="submit" class="process-btn">Buscar Contracheque</button>
+          </form>
+        </div>
       </div>
     </div>
   </main>
@@ -67,116 +68,71 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Seu código existente para upload de arquivos permanece igual
-      const fileInput = document.getElementById('file-upload');
+    // Preloader
+    window.addEventListener('load', function() {
+      const preloader = document.getElementById('preloader');
+      if (preloader) {
+        preloader.style.opacity = '0';
+        setTimeout(() => preloader.style.display = 'none', 500);
+      }
+    });
+
+    setTimeout(() => {
+      const preloader = document.getElementById('preloader');
+      if (preloader && preloader.style.display !== 'none') {
+        preloader.style.opacity = '0';
+        setTimeout(() => preloader.style.display = 'none', 500);
+      }
+    }, 5000);
+
+    // Upload de PDFs
+    document.getElementById('file-upload').addEventListener('change', function() {
       const fileNameText = document.getElementById('file-name');
-      const processBtn = document.querySelector('.process-btn');
-      const progressBar = document.getElementById('upload-progress');
+      if (this.files.length === 0) {
+        fileNameText.textContent = 'Nenhum arquivo selecionado';
+      } else {
+        fileNameText.textContent = this.files.length === 1 
+          ? this.files[0].name 
+          : `${this.files.length} arquivos selecionados`;
+      }
+    });
 
-      // ... (código existente de upload)
+    document.getElementById('process-pdf').addEventListener('click', async function() {
+      const files = document.getElementById('file-upload').files;
+      if (!files || files.length === 0) {
+        alert('Selecione pelo menos um arquivo PDF');
+        return;
+      }
+      
+      // Seu código de processamento de PDFs
+    });
 
-      // ===== RH BAHIA =====
-      const loginForm = document.getElementById('formLoginRhBahia');
-      const buscaForm = document.getElementById('formBuscarContracheque');
-      const logoutBtn = document.getElementById('logoutRhBahia');
-      const errorElement = document.getElementById('rh-bahia-error');
-      const resultadoElement = document.getElementById('resultadoRhBahia');
-
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(loginForm);
+    // Busca por matrícula
+    document.getElementById('formContracheque').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const matricula = e.target.matricula.value;
+      
+      try {
+        const response = await fetch('/buscar_contracheque', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `matricula=${matricula}`
+        });
         
-        try {
-          const response = await fetch('/login_rh_bahia', {
-            method: 'POST',
-            body: formData
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            errorElement.style.display = 'none';
-            buscaForm.style.display = 'block';
-            resultadoElement.innerHTML = '';
-          } else {
-            errorElement.style.display = 'block';
-            errorElement.textContent = data.error || 'Erro no login';
-          }
-        } catch (error) {
-          errorElement.style.display = 'block';
-          errorElement.textContent = 'Erro de conexão com o servidor';
+        if (response.status === 401) {
+          window.open('https://rhbahia.ba.gov.br/login', '_blank');
+          alert('Faça login no RH BAHIA primeiro!');
+          return;
         }
-      });
-
-      buscaForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(buscaForm);
         
-        try {
-          const response = await fetch('/buscar_contracheque_rh_bahia', {
-            method: 'POST',
-            body: formData
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            errorElement.style.display = 'none';
-            resultadoElement.innerHTML = `
-              <div class="resultado-item">
-                <h3>${data.dados.mes_ano}</h3>
-                <p><strong>Salário:</strong> R$ ${data.dados.salario}</p>
-                <p><strong>Descontos:</strong> R$ ${data.dados.descontos}</p>
-              </div>
-            `;
-          } else {
-            errorElement.style.display = 'block';
-            errorElement.textContent = data.error || 'Erro ao buscar contracheque';
-          }
-        } catch (error) {
-          errorElement.style.display = 'block';
-          errorElement.textContent = 'Erro de conexão com o servidor';
-        }
-      });
-
-      logoutBtn.addEventListener('click', async () => {
-        try {
-          await fetch('/logout_rh_bahia', { method: 'POST' });
-          buscaForm.style.display = 'none';
-          resultadoElement.innerHTML = '';
-          loginForm.reset();
-        } catch (error) {
-          errorElement.style.display = 'block';
-          errorElement.textContent = 'Erro ao sair';
-        }
-      });
+        const result = await response.json();
+        // Processar os resultados aqui
+        
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao buscar contracheque');
+      }
     });
   </script>
-
-  <script>
-    // Esconde o preloader quando a página estiver totalmente carregada
-    window.addEventListener('load', function() {
-        const preloader = document.getElementById('preloader');
-        if (preloader) {
-            // Adiciona transição suave antes de remover
-            preloader.style.opacity = '0';
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500); // Tempo igual à duração da transição (0.5s)
-        }
-    });
-
-    // Caso a página demore muito para carregar, força após 5 segundos
-    setTimeout(() => {
-        const preloader = document.getElementById('preloader');
-        if (preloader && preloader.style.display !== 'none') {
-            preloader.style.opacity = '0';
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500);
-        }
-    }, 5000);
-</script>
 </body>
 </html>
