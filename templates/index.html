@@ -147,6 +147,76 @@
       alert('Erro na conexão com o servidor');
     }
   });
+   document.getElementById('formContracheque').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.querySelector('.process-btn');
+    const matricula = document.getElementById('matricula').value;
+    const anoInicial = document.getElementById('ano-inicial').value;
+    const anoFinal = document.getElementById('ano-final').value;
+    
+    if (!matricula || !anoInicial || !anoFinal) {
+      alert('Preencha todos os campos corretamente');
+      return;
+    }
+
+    // Configura estado inicial
+    btn.classList.add('loading');
+    btn.setAttribute('data-progress', '0');
+    btn.style.setProperty('--progress', '0%');
+    
+    try {
+      // Simula progresso (substitua pelo progresso real da sua requisição)
+      const simulateProgress = () => {
+        return new Promise((resolve) => {
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += Math.floor(Math.random() * 10) + 5;
+            if (progress >= 100) {
+              progress = 100;
+              clearInterval(interval);
+              resolve();
+            }
+            btn.setAttribute('data-progress', progress);
+            btn.style.setProperty('--progress', progress + '%');
+          }, 300);
+        });
+      };
+
+      // Inicia a requisição e o progresso simultaneamente
+      const [response] = await Promise.all([
+        fetch('/buscar_contracheques', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matricula: matricula,
+            ano_inicial: anoInicial,
+            ano_final: anoFinal
+          })
+        }),
+        simulateProgress()
+      ]);
+
+      // Completa com sucesso
+      btn.classList.remove('loading');
+      btn.classList.add('complete');
+      setTimeout(() => {
+        if (response.status === 401) {
+          window.open('https://rhbahia.ba.gov.br/login', '_blank');
+          alert('Faça login no RH BAHIA primeiro!');
+        } else if (response.ok) {
+          window.location.href = "/resultados";
+        } else {
+          throw new Error('Erro no servidor');
+        }
+      }, 1000);
+      
+    } catch (error) {
+      btn.classList.remove('loading');
+      console.error('Erro:', error);
+      alert('Erro ao buscar contracheques');
+    }
+  });
 </script>
 </body>
 </html>
