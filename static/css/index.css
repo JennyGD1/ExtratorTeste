@@ -142,3 +142,46 @@ footer {
 @keyframes fluxoContinuoBorda {
   to { --gradient-angle: 360deg; }
 }
+/* Animação de carregamento */
+@keyframes loadingBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.btn-loading {
+  position: relative;
+  overflow: hidden;
+  border: none !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(0,0,255,0) 0%, 
+    rgba(0,0,255,1) 50%, 
+    rgba(0,0,255,0) 100%);
+  background-size: 200% 100%;
+  animation: loadingBorder 1.5s infinite linear;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.btn-disabled {
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+
+/* Adicione esta classe quando o carregamento estiver completo */
+.btn-loaded {
+  border: 2px solid #0066ff !important;
+  transition: border 0.3s ease;
+}
