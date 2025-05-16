@@ -1,0 +1,13 @@
+.page-index {
+  padding: 20px;
+  background-color: var(--fundo-azul);
+  color: var(--branco);
+}
+
+.borda-animada {
+  position: relative;
+  border-radius: 40px;
+  padding: 4px;
+  margin: 20px;
+  overflow: hidden;
+}
