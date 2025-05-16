@@ -69,19 +69,17 @@
       }
     });
 
-    // Preencher anos dinamicamente (últimos 5 anos)
-    const anoAtual = new Date().getFullYear();
+    // Preencher anos dinamicamente (2019 a 2025)
     const selectAnoInicial = document.getElementById('ano-inicial');
     const selectAnoFinal = document.getElementById('ano-final');
     
-    for (let i = 0; i < 5; i++) {
-      const ano = anoAtual - i;
+    for (let ano = 2019; ano <= 2025; ano++) {
       selectAnoInicial.innerHTML += `<option value="${ano}">${ano}</option>`;
       selectAnoFinal.innerHTML += `<option value="${ano}">${ano}</option>`;
     }
 
     // Configurar ano final como padrão para o atual
-    selectAnoFinal.value = anoAtual;
+    selectAnoFinal.value = new Date().getFullYear();
 
     // Busca de contracheques
     document.getElementById('formContracheque').addEventListener('submit', async (e) => {
@@ -96,11 +94,7 @@
         return;
       }
 
-      // Exemplo de URL que será construída:
-      // https://rhbahia.ba.gov.br/auditor/contracheque/file/pdf/2024/01/1/11078138
-      
       try {
-        // Aqui você fará a requisição para seu backend
         const response = await fetch('/buscar_contracheques', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -119,8 +113,8 @@
           return;
         }
 
-        // Processar os resultados aqui
-        console.log(result);
+        // Redireciona para a página de resultados
+        window.location.href = "/resultados";
         
       } catch (error) {
         console.error('Erro:', error);
