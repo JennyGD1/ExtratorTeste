@@ -1,9 +1,9 @@
 :root {
-  --fundo-azul: #1a237e;
+  --fundo-azul: #1a237e;        /* Azul escuro */
   --branco: #ffffff;
-  --maida-rosa: #e91e63;
-  --maida-amarelo: #ffeb3b;
-  --maida-azul: #2196f3;
+  --maida-rosa: #e91e63;        /* Rosa original */
+  --maida-amarelo: #ffeb3b;     /* Amarelo original */
+  --azulfeio: #2196f3;        /* Azul claro */
   --gradient-angle: 0deg;
 }
 
@@ -61,7 +61,7 @@ main {
 }
 
 h1 {
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   margin-bottom: 20px;
 }
 
@@ -71,7 +71,7 @@ h1 {
   padding: 15px;
   margin: 20px 0;
   border-left: 4px solid var(--maida-amarelo);
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   text-align: left;
 }
 
@@ -81,7 +81,7 @@ h1 {
 }
 
 .link-externo {
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   font-weight: bold;
   text-decoration: underline;
 }
@@ -94,7 +94,7 @@ h1 {
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   font-weight: bold;
 }
 
@@ -105,7 +105,7 @@ h1 {
   border: 2px solid #ddd;
   border-radius: 8px;
   font-size: 16px;
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
 }
 
 .range-group .range-inputs {
@@ -119,12 +119,12 @@ h1 {
 }
 
 .range-group span {
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
 }
 
 .process-btn {
   background-color: var(--maida-amarelo);
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   border: none;
   padding: 12px 25px;
   font-size: 16px;
@@ -173,20 +173,20 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--maida-azul);
+  color: var(--fundo-azul);
   z-index: 2;
 }
 
 /* Borda animada quando concluído */
 .process-btn.complete {
-  box-shadow: 0 0 0 3px var(--maida-azul);
+  box-shadow: 0 0 0 3px var(--fundo-azul);
   background-color: var(--maida-amarelo);
 }
 
 /* Estado de erro */
 .process-btn.error {
   background-color: var(--maida-rosa);
-  color: white;
+  color: white !important;
 }
 
 footer {
